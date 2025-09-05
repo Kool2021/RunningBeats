@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-
+ 
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('spotify_access_token')?.value;
