@@ -6,18 +6,28 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
   const state = searchParams.get('state');
 
+  // Get the app origin from environment or construct from request
+  const appOrigin = process.env.APP_ORIGIN || 
+    process.env.NEXTAUTH_URL || 
+    `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+
   if (error) {
-    return NextResponse.redirect(`${process.env.APP_ORIGIN}/auth/error?error=${error}`);
+    return NextResponse.redirect(`${appOrigin}/auth/error?error=${error}`);
   }
 
   if (!code || state !== 'playlist_creation') {
-    return NextResponse.redirect(`${process.env.APP_ORIGIN}/auth/error?error=invalid_callback`);
+    return NextResponse.redirect(`${appOrigin}/auth/error?error=invalid_callback`);
   }
 
   try {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
     const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
+
+    if (!clientId || !clientSecret || !redirectUri) {
+      console.error('Missing Spotify credentials:', { clientId: !!clientId, clientSecret: !!clientSecret, redirectUri: !!redirectUri });
+      return NextResponse.redirect(`${appOrigin}/auth/error?error=configuration_error`);
+    }
 
     const response = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     const tokens = await response.json();
 
-    const redirectResponse = NextResponse.redirect(`${process.env.APP_ORIGIN}/auth/success`);
+    const redirectResponse = NextResponse.redirect(`${appOrigin}/auth/success`);
     redirectResponse.cookies.set('spotify_access_token', tokens.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -58,7 +68,7 @@ export async function GET(request: NextRequest) {
     return redirectResponse;
   } catch (error) {
     console.error('Spotify callback error:', error);
-    return NextResponse.redirect(`${process.env.APP_ORIGIN}/auth/error?error=token_exchange_failed`);
+    return NextResponse.redirect(`${appOrigin}/auth/error?error=token_exchange_failed`);
   }
 }
 

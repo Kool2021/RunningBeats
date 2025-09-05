@@ -16,6 +16,8 @@ function AuthErrorContent() {
         return 'Invalid authentication callback. Please try again.';
       case 'token_exchange_failed':
         return 'Failed to authenticate with Spotify. Please try again.';
+      case 'configuration_error':
+        return 'The application is not properly configured. Please contact support.';
       default:
         return 'An authentication error occurred. Please try again.';
     }
